@@ -103,6 +103,9 @@ section{padding:56px 0}
 .fix-head h3{font-size:20px}
 .fix-head p{color:var(--muted);max-width:60ch;margin-top:6px}
 .fix-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.fix-rent{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+.fix-rent h4{font-size:15px;margin-bottom:10px}
+.rent-card{background:#FFFBE0;border-color:var(--yellow-d)}
 
 /* catalog */
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
@@ -490,8 +493,8 @@ const PROBLEMS=[
  {id:'clog',t:'Засор',ico:'🌀',d:'Сначала вантуз, если не помогло — средство и трос. Перчатки обязательно.',items:['p10','c4','p11','h2']},
  {id:'socket',t:'Не работает розетка',ico:'⚡',d:'Проверьте автомат и обесточьте линию. Индикаторная отвёртка покажет фазу.',items:['e1','e4','e8','e6']},
  {id:'toilet',t:'Течёт бачок',ico:'🚽',d:'Обычно меняют арматуру целиком: дешевле, чем искать отдельную грушу.',items:['p6','p5','p2']},
- {id:'shelf',t:'Повесить полку',ico:'🔩',d:'Для бетона — анкер или дюбель-гвоздь, для гипсокартона — «бабочки». Перфоратор можно взять в прокат.',items:['k5','k1','k4','t4','t3']},
- {id:'light',t:'Перегорел свет',ico:'💡',d:'Если лампа новая, а света нет — меняем патрон или выключатель.',items:['e5','e9','e2']}
+ {id:'shelf',t:'Повесить полку',ico:'🔩',d:'Для бетона — анкер или дюбель-гвоздь, для гипсокартона — «бабочки». Перфоратор не обязательно покупать.',items:['k5','k1','k4','t4','t3'],rent:[0,4]},
+ {id:'light',t:'Перегорел свет',ico:'💡',d:'Если лампа новая, а света нет — меняем патрон или выключатель.',items:['e5','e9','e2'],rent:[4]}
 ];
 const ICONS={tap:'<path d="M5 10h8l2-3h4M12 10v3M12 17c0 1.7-1.3 3-3 3"/><path d="M9 20c-1.7 0-3-1.3-3-3 0-1.5 3-5 3-5s3 3.5 3 5"/>',clog:'<circle cx="12" cy="12" r="8"/><path d="M12 8a4 4 0 1 1-4 4"/>',socket:'<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9.5 10v2M14.5 10v2M10 16h4"/>',toilet:'<path d="M6 4h8v6H6zM4 10h14a5 5 0 0 1-5 5H9l1 5H7l-1-5"/>',shelf:'<path d="M3 9h18M6 9v4M18 9v4M8 5h2M14 5h2"/><path d="M4 18h16"/>',light:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>'};
 const RENT=[
@@ -527,7 +530,7 @@ let currentProblem=null;
 $('#problems').innerHTML=PROBLEMS.map(p=>`<button class="prob" data-prob="${p.id}"><span class="prob-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[p.id]}</svg></span><span>${p.t}</span></button>`).join('');
 function renderFix(id,keep){const el=$('#fixPanel');if(!id){el.classList.remove('show');return}
   const p=PROBLEMS.find(x=>x.id===id);const sum=p.items.reduce((a,i)=>a+byId[i].price,0);
-  el.innerHTML=`<div class="fix-head"><div><h3>${p.t}: что взять</h3><p>${p.d}</p></div><button class="btn btn-y" data-addall="${p.id}">Добавить всё · ${fmt(sum)}</button></div><div class="fix-items">${p.items.map(i=>itemCard(byId[i])).join('')}</div>`;
+  el.innerHTML=`<div class="fix-head"><div><h3>${p.t}: что взять</h3><p>${p.d}</p></div><button class="btn btn-y" data-addall="${p.id}">Добавить всё · ${fmt(sum)}</button></div><div class="fix-items">${p.items.map(i=>itemCard(byId[i])).join('')}</div>${p.rent?`<div class="fix-rent"><h4>Или возьмите в прокат</h4><div class="fix-items">${p.rent.map(i=>{const r=RENT[i];return `<article class="item rent-card"><div class="item-top"><div><div class="cat">Прокат</div><h4>${r.n}</h4></div><div class="price">${fmt(r.p)}<small style="font-family:Onest;font-weight:400;color:var(--muted)">/сутки</small></div></div><div style="font-size:14px;color:var(--muted)">${r.d} · залог ${fmt(r.z)}</div><button class="add" data-rent="${i}">Забронировать</button></article>`}).join('')}</div></div>`:''}`;
   if(!keep){el.classList.remove('show');void el.offsetWidth}el.classList.add('show')}
 $('#problems').addEventListener('click',e=>{const b=e.target.closest('[data-prob]');if(!b)return;const id=b.dataset.prob;
   currentProblem=currentProblem===id?null:id;document.querySelectorAll('.prob').forEach(x=>x.classList.toggle('active',x.dataset.prob===currentProblem));renderFix(currentProblem)});
@@ -591,7 +594,7 @@ $('#maxBtn').onclick=()=>openModal(`<h3>Чат магазина в MAX</h3><p>В
 
 /* rent */
 $('#rentList').innerHTML=RENT.map((r,i)=>`<div class="rent-row"><div><h4>${r.n}</h4><small>${r.d} · залог ${fmt(r.z)}</small></div><div class="price">${fmt(r.p)}<small style="font-family:Onest;font-weight:400;color:var(--muted)">/сутки</small></div><button class="mini" data-rent="${i}">Забронировать</button></div>`).join('')+'<p class="catalog-note" style="margin-top:4px">Цены и список для примера.</p>';
-$('#rentList').addEventListener('click',e=>{const b=e.target.closest('[data-rent]');if(!b)return;const r=RENT[b.dataset.rent];
+document.addEventListener('click',e=>{const b=e.target.closest('[data-rent]');if(!b)return;const r=RENT[b.dataset.rent];
   openModal(`<h3>${r.n}</h3><p>${fmt(r.p)} в сутки, залог ${fmt(r.z)}. Нужен паспорт.</p>
   <div class="field">Когда заберёте<select><option>Сегодня</option><option>Завтра</option><option>Послезавтра</option></select></div>
   <div class="field">На сколько<select><option>1 сутки</option><option>2 суток</option><option>3 суток</option></select></div>
